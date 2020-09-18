@@ -39,8 +39,6 @@ app.get('/rooms', (req, res) => {
 })
 
 io.on('connection', (socket) => {
-	let user;
-
   socket.on('join', async (_roomId, _user, callback) => {
     if (!_roomId || !_user) {
       if (callback) {
@@ -51,13 +49,12 @@ io.on('connection', (socket) => {
     }
 
     roomId = _roomId;
-    user = _user;
     name = _user.name;
 
 		if (rooms[roomId]) {
-			rooms[roomId][socket.id] = user.id
+			rooms[roomId][socket.id] = _user.id
 		} else {
-			rooms[roomId] = {[socket.id]: user.id}
+			rooms[roomId] = {[socket.id]: _user.id}
 			roomsCreatedAt.set(rooms[roomId], new Date());
 		}
 		socket.join(roomId)
@@ -73,7 +70,8 @@ io.on('connection', (socket) => {
     io.to(roomId).emit(ChatMessageEventName, msg, name)
 
     const chatMessageRepository = new ChatMessageRepository();
-    chatMessageRepository.create({roomId: roomId, fromUser: user.id, message: msg});
+    const userId = rooms[roomId][socket.id];
+    chatMessageRepository.create({roomId: roomId, fromUser: userId, message: msg});
   })
 
 	socket.on('disconnect', () => {
