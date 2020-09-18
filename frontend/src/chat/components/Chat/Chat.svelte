@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {onMount, afterUpdate} from 'svelte'
-	import Message from './Message.svelte'
+	import type {User} from '../../models/user';
+    import Message from './Message.svelte'
 
 	import type {
 		MessageHandler,
@@ -10,9 +11,9 @@
 		ChatSettings,
 	} from '../../interfaces/chat'
 
-	export let chatFactory: (settings: ChatSettings) => ChatController
-	export let roomId: string
-	export let name: string
+    export let chatFactory: (settings: ChatSettings) => ChatController;
+    export let roomId: string;
+    export let user: User;
 
 	let newMessageText: string = ''
 
@@ -34,7 +35,7 @@
 	}
 
 	onMount(() => {
-		chatController = chatFactory({roomId, name, messageHandler: handleNewMessage})
+		chatController = chatFactory({roomId, user, messageHandler: handleNewMessage})
 	})
 </script>
 
