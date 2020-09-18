@@ -1,4 +1,4 @@
-import type {User} from '../models/user';
+import type {User} from '../models/user'
 
 export interface Message {
 	text: string
@@ -11,9 +11,9 @@ export type MessageHandler = (message: Message) => void
 export type EmitHandler = (error: any, response: any) => void
 
 export interface ChatSettings {
-    roomId: string;
-    user: User;
-    messageHandler: MessageHandler;
+	roomId: string
+	user: User
+	messageHandler: MessageHandler
 }
 
 export interface ChatController {
