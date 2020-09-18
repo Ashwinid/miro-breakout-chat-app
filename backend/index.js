@@ -5,7 +5,8 @@ var http = require('http').Server(app)
 var socketConfig = require('./config')
 var io = require('socket.io')(http, socketConfig)
 var port = process.env.PORT || 8081
-require("./repositories/set-up")();
+require('./repositories/set-up')();
+const ChatMessageRepository = require('./repositories/chat-message-repository');
 
 var rooms = {}
 var roomsCreatedAt = new WeakMap()
@@ -34,16 +35,19 @@ app.get('/rooms', (req, res) => {
 })
 
 io.on('connection', (socket) => {
-	socket.on('join', (_roomId, _user, callback) => {
-		if (!_roomId || !_user) {
-			if (callback) {
-				callback('roomId and user params required')
-			}
-			console.warn(`${socket.id} attempting to connect without roomId or user`, { _roomId, _user})
-			return
-		}
+	let user;
+
+  socket.on('join', (_roomId, _user, callback) => {
+    if (!_roomId || !_user) {
+      if (callback) {
+        callback('roomId and user params required')
+      }
+      console.warn(`${socket.id} attempting to connect without roomId or user`, { _roomId, _user })
+      return
+    }
 
     roomId = _roomId;
+    user = _user;
     name = _user.name;
 
 		if (rooms[roomId]) {
@@ -64,8 +68,11 @@ io.on('connection', (socket) => {
 	})
 
 	socket.on('chat message', (msg) => {
-		io.to(roomId).emit('chat message', msg, name)
-	})
+    io.to(roomId).emit('chat message', msg, name)
+
+    const chatMessageRepository = new ChatMessageRepository();
+    chatMessageRepository.create({roomId: roomId, fromUser: user.id, message: msg});
+  })
 
 	socket.on('disconnect', () => {
 		io.to(roomId).emit('system message', `${name} left ${roomId}`)
