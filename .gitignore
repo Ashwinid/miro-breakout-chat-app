@@ -2,5 +2,11 @@ node_modules
 /backend/public/
 /frontend/public/**/build/
 
+# Database Storage
+/backend/data/
+
+# IntelliJ IDEA
+.idea/
+
 .DS_Store
 .env

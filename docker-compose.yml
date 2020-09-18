@@ -1,6 +1,15 @@
 version: "3.4"
 
 services:
+  database:
+    image: "mongo:4.4.1"
+    ports:
+      - 27017:27017
+    volumes:
+      - ./backend/data:/data/db
+    networks:
+      - app-network
+
   backend:
     build:
       context: ./backend
@@ -12,6 +21,8 @@ services:
       - ./backend/node_modules:/home/node/app/node_modules
     networks:
       - app-network
+    depends_on:
+      - database
     command: "npm run dev"
 
   frontend:
