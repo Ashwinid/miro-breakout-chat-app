@@ -1,14 +1,11 @@
 <script lang="ts">
-	import {onMount, afterUpdate} from 'svelte'
+    import {onMount} from 'svelte'
 	import type {User} from '../../models/user';
     import Message from './Message.svelte'
 
 	import type {
 		MessageHandler,
-		EmitHandler,
-		Message as MessageInterface,
-		ChatController,
-		ChatSettings,
+		Message as MessageInterface, ChatController, ChatSettings ,
 	} from '../../interfaces/chat'
 
     export let chatFactory: (settings: ChatSettings) => ChatController;
