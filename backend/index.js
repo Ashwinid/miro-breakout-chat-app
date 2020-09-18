@@ -14,20 +14,24 @@ var names = new Map();
 var roomId
 var name
 
+const ChatHistoryEventName = 'chat history';
+const ChatMessageEventName = 'chat message';
+const SystemMessageEventName = 'system message';
+
 app.use(cors())
 
 app.get('/rooms/:roomId', (req, res) => {
 	const {roomId} = req.params
 	const room = rooms[roomId]
 
-	if (room) {
-		res.json({
-			createdAt: roomsCreatedAt.get(room),
-			users: Object.values(room).map((socket) => names.get(socket)),
-		})
-	} else {
-		res.status(500).end()
-	}
+  if (room) {
+    res.json({
+      createdAt: roomsCreatedAt.get(room),
+      users: Object.values(room).map(userId => getNameForUserId(userId))
+    })
+  } else {
+    res.status(500).end()
+  }
 })
 
 app.get('/rooms', (req, res) => {
@@ -51,37 +55,29 @@ io.on('connection', (socket) => {
     name = _user.name;
 
 		if (rooms[roomId]) {
-			rooms[roomId][socket.id] = socket
+			rooms[roomId][socket.id] = user.id
 		} else {
-			rooms[roomId] = {[socket.id]: socket}
+			rooms[roomId] = {[socket.id]: user.id}
 			roomsCreatedAt.set(rooms[roomId], new Date());
 		}
 		socket.join(roomId)
 
-		names.set(_user.id, name)
-
-    io.to(roomId).emit('system message', `${name} joined ${roomId}`);
-
-		const chatMessageRepository = new ChatMessageRepository();
-    const chatHistory = await chatMessageRepository.getByRoomId(roomId);
-    chatHistory.forEach(chat => chat.fromUser = names.get(chat.fromUser));
-
-    socket.emit('chat history', chatHistory);
+    await onNewUserJoined(_user, socket, roomId);
 
 		if (callback) {
 			callback(null, {success: true})
 		}
 	})
 
-	socket.on('chat message', (msg) => {
-    io.to(roomId).emit('chat message', msg, name)
+	socket.on(ChatMessageEventName, (msg) => {
+    io.to(roomId).emit(ChatMessageEventName, msg, name)
 
     const chatMessageRepository = new ChatMessageRepository();
     chatMessageRepository.create({roomId: roomId, fromUser: user.id, message: msg});
   })
 
 	socket.on('disconnect', () => {
-		io.to(roomId).emit('system message', `${name} left ${roomId}`)
+		io.to(roomId).emit(SystemMessageEventName, `${name} left ${roomId}`)
 
 		delete rooms[roomId][socket.id]
 
@@ -91,6 +87,26 @@ io.on('connection', (socket) => {
 		}
 	})
 })
+
+async function onNewUserJoined(user, socket, roomId) {
+  setNameForUser(user.id, user.name);
+
+  io.to(roomId).emit(SystemMessageEventName, `${user.name} joined ${roomId}`);
+
+  const chatMessageRepository = new ChatMessageRepository();
+  const chatHistory = await chatMessageRepository.getByRoomId(roomId);
+  chatHistory.forEach(chat => chat.fromUser = getNameForUserId(chat.fromUser));
+
+  socket.emit(ChatHistoryEventName, chatHistory);
+}
+
+function setNameForUser(userId, name) {
+  names.set(userId, name)
+}
+
+function getNameForUserId(userId) {
+  return names.get(userId);
+}
 
 http.listen(port, '0.0.0.0', () => {
 	console.log('listening on *:' + port)
