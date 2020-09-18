@@ -10,7 +10,7 @@ const ChatMessageRepository = require('./repositories/chat-message-repository');
 
 var rooms = {}
 var roomsCreatedAt = new WeakMap()
-var names = new WeakMap()
+var names = new Map();
 var roomId
 var name
 
@@ -37,7 +37,7 @@ app.get('/rooms', (req, res) => {
 io.on('connection', (socket) => {
 	let user;
 
-  socket.on('join', (_roomId, _user, callback) => {
+  socket.on('join', async (_roomId, _user, callback) => {
     if (!_roomId || !_user) {
       if (callback) {
         callback('roomId and user params required')
@@ -54,13 +54,19 @@ io.on('connection', (socket) => {
 			rooms[roomId][socket.id] = socket
 		} else {
 			rooms[roomId] = {[socket.id]: socket}
-			roomsCreatedAt.set(rooms[roomId], new Date())
+			roomsCreatedAt.set(rooms[roomId], new Date());
 		}
 		socket.join(roomId)
 
-		names.set(socket, name)
+		names.set(_user.id, name)
 
-		io.to(roomId).emit('system message', `${name} joined ${roomId}`)
+    io.to(roomId).emit('system message', `${name} joined ${roomId}`);
+
+		const chatMessageRepository = new ChatMessageRepository();
+    const chatHistory = await chatMessageRepository.getByRoomId(roomId);
+    chatHistory.forEach(chat => chat.fromUser = names.get(chat.fromUser));
+
+    socket.emit('chat history', chatHistory);
 
 		if (callback) {
 			callback(null, {success: true})

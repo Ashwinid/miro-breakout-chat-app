@@ -6,7 +6,7 @@ export interface Message {
 	timestamp: Date
 }
 
-export type MessageHandler = (msg: string, name: string) => void
+export type MessageHandler = (message: Message) => void
 
 export type EmitHandler = (error: any, response: any) => void
 
