@@ -5,6 +5,7 @@ var http = require('http').Server(app)
 var socketConfig = require('./config')
 var io = require('socket.io')(http, socketConfig)
 var port = process.env.PORT || 8081
+require("./repositories/set-up")();
 
 var rooms = {}
 var roomsCreatedAt = new WeakMap()
