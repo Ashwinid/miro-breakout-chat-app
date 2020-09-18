@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {onMount} from 'svelte'
+    import {afterUpdate, onMount} from 'svelte'
 	import type {User} from '../../models/user';
     import Message from './Message.svelte'
 
@@ -21,8 +21,13 @@
 		messages = [...messages, message]
 	}
 
-	const handleMessageSend = () => {
-		if (!newMessageText) return
+	const scrollToBottom = () => {
+        const wrapper = document.querySelector('.sidebar__messages_wrapper');
+        wrapper.scrollTop = wrapper.scrollHeight;
+    }
+
+    const handleMessageSend = () => {
+        if (!newMessageText) return
 
 		chatController.sendMessage(newMessageText)
 
@@ -31,9 +36,11 @@
 		return false
 	}
 
-	onMount(() => {
-		chatController = chatFactory({roomId, user, messageHandler: handleNewMessage})
-	})
+    onMount(() => {
+        chatController = chatFactory({ roomId, user, messageHandler: handleNewMessage });
+    });
+
+    afterUpdate(() => scrollToBottom());
 </script>
 
 <style>
@@ -53,7 +60,7 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-end;
-		height: calc(100% - 120px);
+		height: calc(100% - 135px);
 		padding: 0 24px;
 	}
 
@@ -64,6 +71,10 @@
 	.sidebar__footer input {
 		width: 100%;
 	}
+
+    .sidebar__messages_wrapper {
+        overflow: scroll;
+    }
 </style>
 
 <div class="sidebar__container">
@@ -71,9 +82,11 @@
 		<span class="miro-h2">Breakout Chat</span>
 	</div>
 	<div class="sidebar__body">
-		{#each messages as message}
-			<Message {message} />
-		{/each}
+		<div class="sidebar__messages_wrapper">
+            {#each messages as message}
+                <Message {message} />
+            {/each}
+        </div>
 	</div>
 	<div class="sidebar__footer">
 		<form on:submit|preventDefault={handleMessageSend}>
