@@ -67,10 +67,10 @@ io.on('connection', (socket) => {
 	})
 
 	socket.on(ChatMessageEventName, (msg) => {
-    io.to(roomId).emit(ChatMessageEventName, msg, name)
+    const userId = getUserIdFromSocket(roomId, socket);
+    io.to(roomId).emit(ChatMessageEventName, msg, getNameForUserId(userId));
 
     const chatMessageRepository = new ChatMessageRepository();
-    const userId = rooms[roomId][socket.id];
     chatMessageRepository.create({roomId: roomId, fromUser: userId, message: msg});
   })
 
@@ -96,6 +96,10 @@ async function onNewUserJoined(user, socket, roomId) {
   chatHistory.forEach(chat => chat.fromUser = getNameForUserId(chat.fromUser));
 
   socket.emit(ChatHistoryEventName, chatHistory);
+}
+
+function getUserIdFromSocket(roomId, socket) {
+  return rooms[roomId][socket.id];
 }
 
 function setNameForUser(userId, name) {
