@@ -34,17 +34,17 @@ app.get('/rooms', (req, res) => {
 })
 
 io.on('connection', (socket) => {
-	socket.on('join', (_roomId, _name, callback) => {
-		if (!_roomId || !_name) {
+	socket.on('join', (_roomId, _user, callback) => {
+		if (!_roomId || !_user) {
 			if (callback) {
-				callback('roomId and name params required')
+				callback('roomId and user params required')
 			}
-			console.warn(`${socket.id} attempting to connect without roomId or name`, {roomId, name})
+			console.warn(`${socket.id} attempting to connect without roomId or user`, { _roomId, _user})
 			return
 		}
 
-		roomId = _roomId
-		name = _name
+    roomId = _roomId;
+    name = _user.name;
 
 		if (rooms[roomId]) {
 			rooms[roomId][socket.id] = socket
